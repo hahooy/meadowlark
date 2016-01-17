@@ -1,12 +1,8 @@
 var express = require('express');
 var handlebars = require('express3-handlebars').create({ defaultLayout: 'main' });
+var fortune = require('./lib/fortune.js');
 
 var app = express();
-var fortunes = [
-    "Conquer your fears or they will conquer you.", "Rivers need springs.",
-    "Do not fear what you don't know.",
-    "You will have a pleasant surprise.", "Whenever possible, keep it simple.",
-];
 
 
 // set up app dependencies
@@ -17,13 +13,40 @@ app.set('port', process.env.PORT || 3000);
 // set up app middlewares
 app.use(express.static(__dirname + '/public'));
 
+app.use(function(req, res, next) {
+    res.locals.showTests = app.get('env') !== 'production' && req.query.test === '1';
+    next();
+});
+
 app.get('/', function(req, res) {
     res.render('home');
 });
 
 app.get('/about', function(req, res) {
-    var randomFortune = fortunes[Math.floor(Math.random() * fortunes.length)];
-    res.render('about', { 'fortune': randomFortune });
+    var randomFortune = fortune.getFortune();
+    res.render('about', {
+	'fortune': randomFortune,
+	'pageTestScript': '/qa/tests-about.js'
+    });
+});
+
+app.get('/header', function(req, res) {
+    res.set('Content-Type','text/plain');
+    var s = '';
+    for (var prop in req.headers) {
+	if (req.headers.hasOwnProperty(prop)) {
+	    s += prop + ':' + req.header[prop] + '\n';
+	}
+    }
+    res.send(s);
+});
+
+app.get('/tours/hood-river', function(req, res) {
+    res.render('tours/hood-river');
+});
+
+app.get('/tours/request-group-rate', function(req, res) {
+    res.render('tours/request-group-rate');
 });
 
 // custom 404 page
